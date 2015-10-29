@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="text/javascript" src="https://static.opentok.com/v2/js/opentok.min.js"></script>
+    <script type="text/javascript" src="/javascripts/app.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="stylesheets/style.css"  rel="stylesheet">
+  </head>
+  <body>
+    <h1>OpenTok <small>Network test</small></h1>
+    <div id="status_container" class="prettyBox">
+      <h2>Testing stream capabilities</h2>
+      <p>Acquiring camera</p>
+      <img src="assets/spinner.gif">
+    </div>
+    <button class="prettyButton" onclick="toggleResults()">Show Results</button>
+    <div id="results_container" class="prettyBox" style="display: none;">
+      <h2>Results:</h2>
+      <p>Video Bitrate:
+        <span id="videoBitrate"></span>
+      </p>  
+      <p>Video Packet Loss:
+        <span id="videoPacketLoss"></span>
+      </p>  
+      <p>Audio Bitrate:
+        <span id="audioBitrate"></span>
+      </p>  
+      <p>Audio Packet Loss:
+        <span id="audioPacketLoss"></span>
+      </p>  
+    </div>
+  </body>
+</html>
