@@ -22,9 +22,9 @@ var testStreamingCapability = function(subscriber, callback) {
   performQualityTest({subscriber: subscriber, timeout: TEST_TIMEOUT_MS}, function(error, results) {
     console.log('Test concluded', results);
 
-    document.getElementById('videoBitrate').textContent = JSON.stringify(results.video.bitsPerSecond).split('.')[0] + ' kbps';
+    document.getElementById('videoBitrate').textContent = JSON.stringify(results.video.bitsPerSecond / 1000).split('.')[0] + ' kbps';
     document.getElementById('videoPacketLoss').textContent = JSON.stringify(results.video.packetLossRatioPerSecond * 100).split('.')[0] + '%';
-    document.getElementById('audioBitrate').textContent = JSON.stringify(results.audio.bitsPerSecond).split('.')[0] + ' kbps';
+    document.getElementById('audioBitrate').textContent = JSON.stringify(results.audio.bitsPerSecond / 1000).split('.')[0] + ' kbps';
     document.getElementById('audioPacketLoss').textContent = JSON.stringify(results.audio.packetLossRatioPerSecond * 100).split('.')[0] + '%';
 
     var audioVideoSupported = results.video.bitsPerSecond > 250000 &&
