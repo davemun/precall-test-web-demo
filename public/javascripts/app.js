@@ -4,6 +4,7 @@
 */
 
 $.get("/session", function (data) {
+  var data = JSON.parse(data);
   var API_KEY = data.apiKey; //'45200812';
   var SESSION_ID = data.sessionId; //'2_MX40NTIwMDgxMn5-MTQ0ODkyMzMzMzYyNX54U1ZJNUtnWXRyYUZ3T3Z5d2h0OW1KQ29-fg';
   var TOKEN = data.token; //'T1==cGFydG5lcl9pZD00NTIwMDgxMiZzaWc9N2Y4YTE4YTc2NTRmODJhZGRlMmUxZDM1NDQ4MjhhYjk4MTU5NTQwMjpyb2xlPXB1Ymxpc2hlciZzZXNzaW9uX2lkPTJfTVg0ME5USXdNRGd4TW41LU1UUTBPRGt5TXpNek16WXlOWDU0VTFaSk5VdG5XWFJ5WVVaM1QzWjVkMmgwT1cxS1EyOS1mZyZjcmVhdGVfdGltZT0xNDQ4OTIzMzQ2Jm5vbmNlPTAuMTQwNjk1NDU3MjI5MzU0MDYmZXhwaXJlX3RpbWU9MTQ1MTUxNTMyNiZjb25uZWN0aW9uX2RhdGE9';
@@ -151,26 +152,24 @@ $.get("/session", function (data) {
     }
   );
 
-  document.addEventListener('DOMContentLoaded', function() {
-    var container = document.createElement('div');
-    container.className = 'container';
+  var container = document.createElement('div');
+  container.className = 'container';
 
-    container.appendChild(publisherEl);
-    container.appendChild(subscriberEl);
-    document.body.appendChild(container);
+  container.appendChild(publisherEl);
+  container.appendChild(subscriberEl);
+  document.body.appendChild(container);
 
-    // This publisher uses the default resolution (640x480 pixels) and frame rate (30fps).
-    // For other resoultions you may need to adjust the bandwidth conditions in
-    // testStreamingCapability().
+  // This publisher uses the default resolution (640x480 pixels) and frame rate (30fps).
+  // For other resoultions you may need to adjust the bandwidth conditions in
+  // testStreamingCapability().
 
-    publisher = OT.initPublisher(publisherEl, {}, callbacks.onInitPublisher);
+  publisher = OT.initPublisher(publisherEl, {}, callbacks.onInitPublisher);
 
-    session = OT.initSession(API_KEY, SESSION_ID);
-    session.connect(TOKEN, callbacks.onConnect);
-    statusContainerEl = document.getElementById('status_container');
-    statusMessageEl = statusContainerEl.querySelector('p');
-    statusIconEl = statusContainerEl.querySelector('img');
-  });
+  session = OT.initSession(API_KEY, SESSION_ID);
+  session.connect(TOKEN, callbacks.onConnect);
+  statusContainerEl = document.getElementById('status_container');
+  statusMessageEl = statusContainerEl.querySelector('p');
+  statusIconEl = statusContainerEl.querySelector('img');
 
   // Helpers
   function setText(el, text) {
