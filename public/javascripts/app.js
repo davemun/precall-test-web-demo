@@ -5,11 +5,11 @@
 
 $.get("/session", function (data) {
   var data = JSON.parse(data);
-  var API_KEY = data.apiKey; //'45200812';
-  var SESSION_ID = data.sessionId; //'2_MX40NTIwMDgxMn5-MTQ0ODkyMzMzMzYyNX54U1ZJNUtnWXRyYUZ3T3Z5d2h0OW1KQ29-fg';
-  var TOKEN = data.token; //'T1==cGFydG5lcl9pZD00NTIwMDgxMiZzaWc9N2Y4YTE4YTc2NTRmODJhZGRlMmUxZDM1NDQ4MjhhYjk4MTU5NTQwMjpyb2xlPXB1Ymxpc2hlciZzZXNzaW9uX2lkPTJfTVg0ME5USXdNRGd4TW41LU1UUTBPRGt5TXpNek16WXlOWDU0VTFaSk5VdG5XWFJ5WVVaM1QzWjVkMmgwT1cxS1EyOS1mZyZjcmVhdGVfdGltZT0xNDQ4OTIzMzQ2Jm5vbmNlPTAuMTQwNjk1NDU3MjI5MzU0MDYmZXhwaXJlX3RpbWU9MTQ1MTUxNTMyNiZjb25uZWN0aW9uX2RhdGE9';
+  var API_KEY = data.apiKey;
+  var SESSION_ID = data.sessionId;
+  var TOKEN = data.token;
 
-  var TEST_TIMEOUT_MS = 15000; // 15 seconds
+  var TEST_TIMEOUT_MS = 30000; // 30 seconds
 
   var publisherEl = document.createElement('div');
   var subscriberEl = document.createElement('div');
@@ -123,7 +123,7 @@ $.get("/session", function (data) {
         return;
       }
 
-      setText(statusMessageEl, 'Checking your available bandwidth');
+      setText(statusMessageEl, 'Checking your available bandwidth (30s test)');
 
       testStreamingCapability(subscriber, function(error, message) {
         setText(statusMessageEl, message.text);
@@ -173,195 +173,195 @@ $.get("/session", function (data) {
 
 });
 
-  // Helpers
-  function setText(el, text) {
-    if (!el) {
-      return;
-    }
-
-    if (el.textContent) {
-      el.textContent = text;
-    }
-
-    if (el.innerText) {
-      el.innerText = text;
-    }
+// Helpers
+function setText(el, text) {
+  if (!el) {
+    return;
   }
 
-  function pluck(arr, propertName) {
-    return arr.map(function(value) {
-      return value[propertName];
-    });
+  if (el.textContent) {
+    el.textContent = text;
   }
 
-  function sum(arr, propertyName) {
-    if (typeof propertyName !== 'undefined') {
-      arr = pluck(arr, propertyName);
-    }
+  if (el.innerText) {
+    el.innerText = text;
+  }
+}
 
-    return arr.reduce(function(previous, current) {
-      return previous + current;
-    }, 0);
+function pluck(arr, propertName) {
+  return arr.map(function(value) {
+    return value[propertName];
+  });
+}
+
+function sum(arr, propertyName) {
+  if (typeof propertyName !== 'undefined') {
+    arr = pluck(arr, propertyName);
   }
 
-  function max(arr) {
-    return Math.max.apply(undefined, arr);
-  }
+  return arr.reduce(function(previous, current) {
+    return previous + current;
+  }, 0);
+}
 
-  function min(arr) {
-    return Math.min.apply(undefined, arr);
-  }
+function max(arr) {
+  return Math.max.apply(undefined, arr);
+}
 
-  function calculatePerSecondStats(statsBuffer, seconds) {
-    var stats = {};
-    ['video', 'audio'].forEach(function(type) {
-      stats[type] = {
-        packetsPerSecond: sum(pluck(statsBuffer, type), 'packetsReceived') / seconds,
-        bitsPerSecond: (sum(pluck(statsBuffer, type), 'bytesReceived') * 8) / seconds,
-        packetsLostPerSecond: sum(pluck(statsBuffer, type), 'packetsLost') / seconds
-      };
-      stats[type].packetLossRatioPerSecond = (
-        stats[type].packetsLostPerSecond / stats[type].packetsPerSecond
-      );
-    });
+function min(arr) {
+  return Math.min.apply(undefined, arr);
+}
 
-    stats.windowSize = seconds;
-    return stats;
-  }
-
-  function getSampleWindowSize(samples) {
-    var times = pluck(samples, 'timestamp');
-    return (max(times) - min(times)) / 1000;
-  }
-
-  if (!Array.prototype.forEach) {
-    Array.prototype.forEach = function(fn, scope) {
-      for (var i = 0, len = this.length; i < len; ++i) {
-        fn.call(scope, this[i], i, this);
-      }
+function calculatePerSecondStats(statsBuffer, seconds) {
+  var stats = {};
+  ['video', 'audio'].forEach(function(type) {
+    stats[type] = {
+      packetsPerSecond: sum(pluck(statsBuffer, type), 'packetsReceived') / seconds,
+      bitsPerSecond: (sum(pluck(statsBuffer, type), 'bytesReceived') * 8) / seconds,
+      packetsLostPerSecond: sum(pluck(statsBuffer, type), 'packetsLost') / seconds
     };
-  }
+    stats[type].packetLossRatioPerSecond = (
+      stats[type].packetsLostPerSecond / stats[type].packetsPerSecond
+    );
+  });
 
-  function compositeOfCallbacks(obj, fns, callback) {
-    var results = {};
-    var hasError = false;
+  stats.windowSize = seconds;
+  return stats;
+}
 
-    var checkDone = function checkDone() {
-      if (Object.keys(results).length === fns.length) {
-        callback(hasError, results);
-        callback = function() {};
-      }
-    };
+function getSampleWindowSize(samples) {
+  var times = pluck(samples, 'timestamp');
+  return (max(times) - min(times)) / 1000;
+}
 
-    fns.forEach(function(key) {
-      var originalCallback = obj[key];
+if (!Array.prototype.forEach) {
+  Array.prototype.forEach = function(fn, scope) {
+    for (var i = 0, len = this.length; i < len; ++i) {
+      fn.call(scope, this[i], i, this);
+    }
+  };
+}
 
-      obj[key] = function(error) {
-        results[key] = {
-          error: error,
-          args: Array.prototype.slice.call(arguments, 1)
-        };
+function compositeOfCallbacks(obj, fns, callback) {
+  var results = {};
+  var hasError = false;
 
-        if (error) {
-          hasError = true;
-        }
-
-        originalCallback.apply(obj, arguments);
-        checkDone();
-      };
-    });
-  }
-
-  function bandwidthCalculatorObj(config) {
-    var intervalId;
-
-    config.pollingInterval = config.pollingInterval || 500;
-    config.windowSize = config.windowSize || 2000;
-    config.subscriber = config.subscriber || undefined;
-
-    return {
-      start: function(reportFunction) {
-        var statsBuffer = [];
-        var last = {
-          audio: {},
-          video: {}
-        };
-
-        intervalId = window.setInterval(function() {
-          config.subscriber.getStats(function(error, stats) {
-            var snapshot = {};
-            var nowMs = new Date().getTime();
-            var sampleWindowSize;
-
-            ['audio', 'video'].forEach(function(type) {
-              snapshot[type] = Object.keys(stats[type]).reduce(function(result, key) {
-                result[key] = stats[type][key] - (last[type][key] || 0);
-                last[type][key] = stats[type][key];
-                return result;
-              }, {});
-            });
-
-            // get a snapshot of now, and keep the last values for next round
-            snapshot.timestamp = stats.timestamp;
-
-            statsBuffer.push(snapshot);
-            statsBuffer = statsBuffer.filter(function(value) {
-              return nowMs - value.timestamp < config.windowSize;
-            });
-
-            sampleWindowSize = getSampleWindowSize(statsBuffer);
-
-            if (sampleWindowSize !== 0) {
-              reportFunction(calculatePerSecondStats(
-                statsBuffer,
-                sampleWindowSize
-              ));
-            }
-          });
-        }, config.pollingInterval);
-      },
-
-      stop: function() {
-        window.clearInterval(intervalId);
-      }
-    };
-  }
-
-  function performQualityTest(config, callback) {
-    var startMs = new Date().getTime();
-    var testTimeout;
-    var currentStats;
-
-    var bandwidthCalculator = bandwidthCalculatorObj({
-      subscriber: config.subscriber
-    });
-
-    var cleanupAndReport = function() {
-      currentStats.elapsedTimeMs = new Date().getTime() - startMs;
-      callback(undefined, currentStats);
-
-      window.clearTimeout(testTimeout);
-      bandwidthCalculator.stop();
-
+  var checkDone = function checkDone() {
+    if (Object.keys(results).length === fns.length) {
+      callback(hasError, results);
       callback = function() {};
-    };
-
-    // bail out of the test after 30 seconds
-    window.setTimeout(cleanupAndReport, config.timeout);
-
-    bandwidthCalculator.start(function(stats) {
-      console.log(stats);
-
-      // you could do something smart here like determine if the bandwidth is
-      // stable or acceptable and exit early
-      currentStats = stats;
-    });
-  }
-
-  function toggleResults () {
-    if (document.getElementById('results_container').style.display === 'none') {
-      document.getElementById('results_container').style.display = 'block';
-    } else if (document.getElementById('results_container').style.display === 'block') {
-      document.getElementById('results_container').style.display = 'none';
     }
+  };
+
+  fns.forEach(function(key) {
+    var originalCallback = obj[key];
+
+    obj[key] = function(error) {
+      results[key] = {
+        error: error,
+        args: Array.prototype.slice.call(arguments, 1)
+      };
+
+      if (error) {
+        hasError = true;
+      }
+
+      originalCallback.apply(obj, arguments);
+      checkDone();
+    };
+  });
+}
+
+function bandwidthCalculatorObj(config) {
+  var intervalId;
+
+  config.pollingInterval = config.pollingInterval || 500;
+  config.windowSize = config.windowSize || 2000;
+  config.subscriber = config.subscriber || undefined;
+
+  return {
+    start: function(reportFunction) {
+      var statsBuffer = [];
+      var last = {
+        audio: {},
+        video: {}
+      };
+
+      intervalId = window.setInterval(function() {
+        config.subscriber.getStats(function(error, stats) {
+          var snapshot = {};
+          var nowMs = new Date().getTime();
+          var sampleWindowSize;
+
+          ['audio', 'video'].forEach(function(type) {
+            snapshot[type] = Object.keys(stats[type]).reduce(function(result, key) {
+              result[key] = stats[type][key] - (last[type][key] || 0);
+              last[type][key] = stats[type][key];
+              return result;
+            }, {});
+          });
+
+          // get a snapshot of now, and keep the last values for next round
+          snapshot.timestamp = stats.timestamp;
+
+          statsBuffer.push(snapshot);
+          statsBuffer = statsBuffer.filter(function(value) {
+            return nowMs - value.timestamp < config.windowSize;
+          });
+
+          sampleWindowSize = getSampleWindowSize(statsBuffer);
+
+          if (sampleWindowSize !== 0) {
+            reportFunction(calculatePerSecondStats(
+              statsBuffer,
+              sampleWindowSize
+            ));
+          }
+        });
+      }, config.pollingInterval);
+    },
+
+    stop: function() {
+      window.clearInterval(intervalId);
+    }
+  };
+}
+
+function performQualityTest(config, callback) {
+  var startMs = new Date().getTime();
+  var testTimeout;
+  var currentStats;
+
+  var bandwidthCalculator = bandwidthCalculatorObj({
+    subscriber: config.subscriber
+  });
+
+  var cleanupAndReport = function() {
+    currentStats.elapsedTimeMs = new Date().getTime() - startMs;
+    callback(undefined, currentStats);
+
+    window.clearTimeout(testTimeout);
+    bandwidthCalculator.stop();
+
+    callback = function() {};
+  };
+
+  // bail out of the test after 30 seconds
+  window.setTimeout(cleanupAndReport, config.timeout);
+
+  bandwidthCalculator.start(function(stats) {
+    console.log(stats);
+
+    // you could do something smart here like determine if the bandwidth is
+    // stable or acceptable and exit early
+    currentStats = stats;
+  });
+}
+
+function toggleResults () {
+  if (document.getElementById('results_container').style.display === 'none') {
+    document.getElementById('results_container').style.display = 'block';
+  } else if (document.getElementById('results_container').style.display === 'block') {
+    document.getElementById('results_container').style.display = 'none';
   }
+}
