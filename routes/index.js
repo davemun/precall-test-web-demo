@@ -1,5 +1,8 @@
 var express = require('express');
 var router = express.Router();
+if (!process.env.API_KEY && !process.env.API_SECRET) {
+  throw "Environment variables API_KEY and API_SECRET must be defined.";
+}
 var OpenTok = require('opentok'),
     opentok = new OpenTok(process.env.API_KEY, process.env.API_SECRET);
 
