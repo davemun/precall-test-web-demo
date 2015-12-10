@@ -4,6 +4,7 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var env = process.env.NODE_ENV || 'development';
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
@@ -21,6 +22,16 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+//Redirect all traffic to HTTPS if in production.
+if (env === 'production') {
+  app.use(function (req, res, next) {
+    if (req.headers['x-forwarded-proto'] !== 'https') {
+        return res.redirect(['https://', req.get('Host'), req.url].join(''));
+    }
+    return next();
+  });
+}
 
 app.use('/', routes);
 app.use('/users', users);
