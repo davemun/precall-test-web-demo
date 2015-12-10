@@ -30,21 +30,38 @@ $.get("/session", function (data) {
       document.getElementById('audioBitrate').textContent = JSON.stringify(results.audio.bitsPerSecond / 1000).split('.')[0] + ' kbps';
       document.getElementById('audioPacketLoss').textContent = JSON.stringify(results.audio.packetLossRatioPerSecond * 100).split('.')[0] + '%';
 
-      var audioVideoSupported = results.video.bitsPerSecond > 250000 &&
-        results.video.packetLossRatioPerSecond < 0.03 &&
-        results.audio.bitsPerSecond > 25000 &&
-        results.audio.packetLossRatioPerSecond < 0.05;
+      var videoKbps = results.video.bitsPerSecond / 1000,
+          videoPlr = results.video.packetLossRatioPerSecond,
+          audioKbps = results.audio.bitsPerSecond / 1000,
+          audioPlr = results.audio.packetLossRatioPerSecond;
 
-      if (audioVideoSupported) {
+      var videoSupported = 
+        (videoKbps > 1000 && videoPlr <= 0.10)
+          || 
+        (videoKbps > 600 && videoPlr <= 0.10)
+          || 
+        (videoKbps > 300 && videoPlr <= 0.05)
+          || 
+        (videoKbps > 250 && videoPlr <= 0.03)
+          || 
+        (videoKbps > 150 && videoPlr <= 0.03);
+
+      var audioSupported = 
+        (audioKbps > 40 && videoPlr <= 0.10)
+          || 
+        (audioKbps > 25 && videoPlr <=0.05);
+
+      if (audioSupported && videoSupported) {
         return callback(false, {
           text: 'You\'re all set!',
           icon: 'assets/icon_tick.svg'
         });
       }
 
-      if (results.audio.packetLossRatioPerSecond < 0.05) {
+      //Video AND concurrent audio is not supported, check if their audio-only is stable (< 5% plr)
+      if (results.audio.packetLossRatioPerSecond <= 0.05) {
         return callback(false, {
-          text: 'Your bandwidth can support audio only',
+          text: 'We recommend audio calls to guarantee the most stable experience',
           icon: 'assets/icon_warning.svg'
         });
       }
@@ -58,18 +75,24 @@ $.get("/session", function (data) {
       publisher.publishVideo(false);
 
       performQualityTest({subscriber: subscriber, timeout: 5000}, function(error, results) {
+
+        document.getElementById('videoBitrate').textContent = "Unstable video: Testing audio only";
+        document.getElementById('videoPacketLoss').textContent = "Unstable video: Testing audio only";
+        document.getElementById('audioBitrate').textContent = JSON.stringify(results.audio.bitsPerSecond / 1000).split('.')[0] + ' kbps';
+        document.getElementById('audioPacketLoss').textContent = JSON.stringify(results.audio.packetLossRatioPerSecond * 100).split('.')[0] + '%';        
+
         var audioSupported = results.audio.bitsPerSecond > 25000 &&
-            results.audio.packetLossRatioPerSecond < 0.05;
+            results.audio.packetLossRatioPerSecond <= 0.05;
 
         if (audioSupported) {
           return callback(false, {
-            text: 'Your bandwidth can support audio only',
+            text: 'We recommend audio calls to guarantee the most stable experience',
             icon: 'assets/icon_warning.svg'
           });
         }
 
         return callback(false, {
-          text: 'Your bandwidth is too low for audio',
+          text: 'Your bandwidth or stability is too low for audio or video! Try again later.',
           icon: 'assets/icon_error.svg'
         });
       });
@@ -294,11 +317,19 @@ function bandwidthCalculatorObj(config) {
           var sampleWindowSize;
 
           ['audio', 'video'].forEach(function(type) {
-            snapshot[type] = Object.keys(stats[type]).reduce(function(result, key) {
-              result[key] = stats[type][key] - (last[type][key] || 0);
-              last[type][key] = stats[type][key];
-              return result;
-            }, {});
+            try {
+              snapshot[type] = Object.keys(stats[type]).reduce(function(result, key) {
+                result[key] = stats[type][key] - (last[type][key] || 0);
+                last[type][key] = stats[type][key];
+                return result;
+              }, {});
+            }
+            catch (e) {
+              setText(document.getElementById('status_container').querySelector('p'), 'Missing a camera and/or microphone! Test stopped.');
+              clearInterval(intervalId);
+              alert('You probably either 1) don\'t have a webcam attached, or 2) don\'t have a mic. This test requires both.');
+              return;
+            }
           });
 
           // get a snapshot of now, and keep the last values for next round
